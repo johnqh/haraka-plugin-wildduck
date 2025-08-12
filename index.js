@@ -10,14 +10,14 @@ const dns = require('dns');
 const ObjectId = require('mongodb').ObjectId;
 const punycode = require('punycode.js');
 const SRS = require('srs.js');
-const counters = require('wildduck/lib/counters');
-const tools = require('wildduck/lib/tools');
+const counters = require('@johnqh/wildduck/lib/counters');
+const tools = require('@johnqh/wildduck/lib/tools');
 const StreamCollect = require('./lib/stream-collect');
-const Maildropper = require('wildduck/lib/maildropper');
-const FilterHandler = require('wildduck/lib/filter-handler');
-const BimiHandler = require('wildduck/lib/bimi-handler');
-const autoreply = require('wildduck/lib/autoreply');
-const wdErrors = require('wildduck/lib/errors');
+const Maildropper = require('@johnqh/wildduck/lib/maildropper');
+const FilterHandler = require('@johnqh/wildduck/lib/filter-handler');
+const BimiHandler = require('@johnqh/wildduck/lib/bimi-handler');
+const autoreply = require('@johnqh/wildduck/lib/autoreply');
+const wdErrors = require('@johnqh/wildduck/lib/errors');
 const Gelf = require('gelf');
 const addressparser = require('nodemailer/lib/addressparser');
 const libmime = require('libmime');
@@ -766,6 +766,7 @@ exports.real_rcpt_handler = function (next, connection, params) {
         address,
         {
             wildcard: true,
+            create: true, // create user if not found
             projection: {
                 name: true,
                 address: true,
