@@ -1,15 +1,23 @@
-FROM node:lts-alpine as builder
+FROM node:lts-alpine AS builder
 
 RUN apk add --no-cache git python3 py3-pip make g++
 
 WORKDIR /app
 
 RUN git clone -b v3.0.5 https://github.com/haraka/Haraka.git ./
-RUN npm install --production
 
-RUN npm install haraka-plugin-wildduck
+# COPY haraka-plugin-wildduck /tmp
 
-FROM node:lts-alpine as app
+RUN npm install --omit=dev
+
+# Install plugin
+
+COPY . /app/node_modules/haraka-plugin-wildduck
+WORKDIR /app/node_modules/haraka-plugin-wildduck
+RUN npm install --omit=dev
+
+
+FROM node:lts-alpine AS app
 
 ENV NODE_ENV production
 
