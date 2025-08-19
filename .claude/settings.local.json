@@ -6,7 +6,11 @@
       "Bash(npm install)",
       "Bash(mkdir:*)",
       "Bash(rm:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(gh run list:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(yamllint:*)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []
