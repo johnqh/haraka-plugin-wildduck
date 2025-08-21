@@ -1,6 +1,6 @@
 {
     "name": "haraka-plugin-wildduck",
-    "version": "5.8.28",
+    "version": "5.8.29",
     "description": "Haraka plugin for processing incoming messages for the WildDuck IMAP server",
     "main": "index.js",
     "scripts": {
@@ -23,7 +23,7 @@
         "LMTP"
     ],
     "author": "Andris Reinman",
-    "license": "EUPL-1.1+",
+    "license": "BUSL-1.1",
     "bugs": {
         "url": "https://github.com/johnqh/haraka-plugin-wildduck/issues"
     },
@@ -48,6 +48,6 @@
         "nodemailer": "7.0.3",
         "punycode.js": "2.3.1",
         "srs.js": "0.1.0",
-        "@johnqh/wildduck": "0.3.2"
+        "@johnqh/wildduck": "0.3.3"
     }
 }
