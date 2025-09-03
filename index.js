@@ -1046,7 +1046,7 @@ exports.hook_queue = function (next, connection) {
 
             try {
                 subject = libmime.decodeWords(subject).trim();
-            } catch (E) {
+            } catch (_E) {
                 // failed to parse value
             }
 
@@ -1752,7 +1752,7 @@ exports.getHeaderFrom = function (txn) {
                         if (address.name) {
                             address.name = libmime.decodeWords(address.name).trim();
                         }
-                    } catch (E) {
+                    } catch (_E) {
                         // failed to parse value
                     }
                     fromAddresses.set(uview, { address: normalized, provided: address });
