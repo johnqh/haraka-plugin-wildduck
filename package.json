@@ -29,16 +29,18 @@
     },
     "homepage": "https://github.com/johnqh/haraka-plugin-wildduck#readme",
     "devDependencies": {
+        "@haraka/eslint-config": "2.0.3",
         "eslint": "9.25.1",
         "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "10.1.8",
-        "@haraka/eslint-config": "2.0.3",
         "grunt": "1.6.1",
         "grunt-cli": "1.5.0",
         "grunt-eslint": "24.3.0",
-        "npm-check-updates": "18.0.3"
+        "npm-check-updates": "18.0.3",
+        "prettier": "^3.6.2"
     },
     "dependencies": {
+        "@johnqh/wildduck": "6.11.0",
         "gelf": "2.0.1",
         "haraka-dsn": "1.1.0",
         "ioredis": "5.7.0",
@@ -47,7 +49,6 @@
         "mongodb": "4.17.0",
         "nodemailer": "7.0.6",
         "punycode.js": "2.3.1",
-        "srs.js": "0.1.0",
-        "@johnqh/wildduck": "file:../wildduck"
+        "srs.js": "0.1.0"
     }
 }
