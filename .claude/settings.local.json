@@ -10,7 +10,10 @@
       "Bash(gh run list:*)",
       "mcp__ide__getDiagnostics",
       "Bash(yamllint:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Read(//Users/johnhuang/0xmail/wildduck/lib/**)",
+      "Read(//Users/johnhuang/0xmail/wildduck/**)",
+      "Read(//Users/johnhuang/0xmail/**)"
     ],
     "deny": [],
     "ask": []
