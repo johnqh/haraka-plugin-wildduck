@@ -1,0 +1,135 @@
+# Haraka WildDuck Plugin
+
+## Project Overview
+This is a Haraka SMTP plugin for WildDuck mail server that handles incoming email delivery with comprehensive authentication, filtering, and storage capabilities.
+
+## Architecture
+
+### Core Components
+- **index.js**: Main plugin entry point - handles Haraka hooks (mail, rcpt, queue, deny)
+- **lib/db.js**: MongoDB and Redis connection management
+- **lib/auth.js**: Email authentication (SPF, DKIM, ARC, DMARC, BIMI)
+- **lib/hooks.js**: Wrapper functions for mail and data_post hooks
+- **lib/stream-collect.js**: Stream transformer for collecting email message chunks
+
+### Key Dependencies
+- **@johnqh/wildduck**: Core WildDuck library (local dependency at ../wildduck)
+- **mailauth**: Email authentication protocols
+- **ioredis**: Redis client for rate limiting
+- **mongodb**: Database storage
+
+## Data Flow
+
+1. **MAIL FROM** (hook_mail) → SPF validation → Transaction initialization
+2. **RCPT TO** (hook_rcpt) → User/address resolution → Rate limiting → Quota checks
+3. **DATA** (hook_data_post) → DKIM/ARC/DMARC/BIMI verification
+4. **QUEUE** (hook_queue) → Spam checking → Message forwarding → Storage → Autoreplies
+
+## Key Features
+
+### Email Processing
+- Recipient validation and normalization
+- Wildcard/catchall address support
+- SRS (Sender Rewriting Scheme) for bounces
+- Forwarding with rate limiting
+- Autoreply functionality
+- Filter rules processing
+
+### Authentication & Security
+- SPF verification
+- DKIM signature validation
+- ARC (Authenticated Received Chain)
+- DMARC policy enforcement
+- BIMI logo validation
+- Rspamd spam filtering integration
+
+### Rate Limiting
+- Per-recipient limits
+- Per-IP per-recipient limits
+- Configurable time windows
+- Redis-backed counters
+
+### Storage
+- MongoDB document storage
+- GridFS for attachments
+- Duplicate detection (base64 decoded)
+
+## Configuration
+
+### Database
+- Redis: Rate limiting, counters
+- MongoDB: Messages, users, attachments
+- Separate databases supported for users/gridfs/sender
+
+### Important Settings
+- `limits.rcpt`: Messages per recipient per hour
+- `limits.rcptIp`: Messages per recipient per IP per minute
+- `rspamd.forwardSkip`: Skip forwarding if spam score exceeds threshold
+- `rspamd.blacklist`: Symbols that trigger rejection
+- `auth.minBitLength`: Minimum DKIM/ARC key size (default 1024)
+
+## Development Guidelines
+
+### Code Style
+- Uses CommonJS modules (not ES6 imports)
+- Haraka plugin convention with exports.hook_* functions
+- Async/await preferred for new code
+- GELF logging for production monitoring
+
+### Testing
+- Run `npm test` (uses Grunt + ESLint)
+- Run `npm run lint:fix` for automatic fixes
+
+### Common Patterns
+- Transaction notes (`txn.notes.*`) store per-email state
+- Connection logging: `connection.loginfo/logerror/logdebug(plugin, message)`
+- GELF logging: `plugin.loggelf({ short_message, _custom_fields })`
+- Rate limiting: Check first with increment=0, then increment after success
+
+### Error Handling
+- DENY: Permanent rejection (5xx)
+- DENYSOFT: Temporary rejection (4xx) - retry later
+- Error codes tracked in `txn.notes.rejectCode` for logging
+- All errors logged via GELF with resolution metadata
+
+## Common Tasks
+
+### Adding New Email Validation
+1. Implement in lib/auth.js within hookMail or hookDataPost
+2. Store results in txn.notes.*Result
+3. Add authentication results header via connection.auth_results()
+4. Log to GELF in hooks.js
+
+### Modifying Recipient Handling
+1. Update exports.real_rcpt_handler in index.js
+2. Handle user resolution, forwarding, or both
+3. Update rate limiting keys as needed
+4. Store target info in txn.notes.targets Map
+
+### Rate Limit Changes
+1. Add limit config to config/wildduck.yaml under `limits`
+2. Implement check in checkRateLimit (index.js:1690)
+3. Update counter in updateRateLimit (index.js:1718)
+4. Key pattern: 'rl:{selector}:{key}'
+
+## Important Notes
+
+- Database connection retries automatically every 2 seconds
+- Message streams are piped through collector for chunk storage
+- Forwards and autoreplies processed BEFORE storage to inbox
+- BIMI logo fetching happens during queue hook
+- SPF checks skip for private IPs (result: softfail)
+- Wildcard addresses get X-Original-Rcpt header
+- MongoDB ObjectIds used for tracking (_id fields)
+
+## AI Assistant Guidelines
+
+When working on this codebase:
+1. Preserve Haraka plugin conventions (exports.hook_*)
+2. Maintain GELF logging for all significant events
+3. Add JSDoc comments for complex functions
+4. Consider rate limiting impact for recipient-facing changes
+5. Test with both forwarded and regular mailboxes
+6. Handle transaction notes lifecycle properly
+7. Remember async database operations need error handling
+8. Keep transaction processing efficient (avoid N+1 queries)

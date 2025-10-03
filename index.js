@@ -39,6 +39,10 @@ DSN.mbox_full_554 = () => DSN.create(554, 'Mailbox full', 2, 2);
 const defaultSpamRejectMessage =
     'Our system has detected that this message is likely unsolicited mail.\nTo reduce the amount of spam this message has been blocked.';
 
+/**
+ * Register the WildDuck plugin with Haraka
+ * Initializes configuration and registers hooks for database connection
+ */
 exports.register = function () {
     const plugin = this;
     plugin.logdebug('Initializing WildDuck plugin.');
@@ -50,6 +54,10 @@ exports.register = function () {
     plugin.resolver = async (name, rr) => await dns.promises.resolve(name, rr);
 };
 
+/**
+ * Load WildDuck configuration from wildduck.yaml
+ * Automatically reloads when configuration file changes
+ */
 exports.load_wildduck_cfg = function () {
     this.cfg = this.config.get(
         'wildduck.yaml',
@@ -62,6 +70,12 @@ exports.load_wildduck_cfg = function () {
     );
 };
 
+/**
+ * Open database connections (MongoDB and Redis) and initialize handlers
+ * Retries connection every 2 seconds on failure
+ * @param {Function} next - Haraka callback to continue initialization
+ * @param {Object} server - Haraka server instance
+ */
 exports.open_database = function (next, server) {
     const plugin = this;
 
@@ -170,6 +184,12 @@ exports.open_database = function (next, server) {
     tryCreateConnection();
 };
 
+/**
+ * Normalize email address for database lookups
+ * Handles SRS (Sender Rewriting Scheme) addresses by fixing case-mangling
+ * @param {Object} address - Address object with user and host properties
+ * @returns {string} Normalized email address
+ */
 exports.normalize_address = function (address) {
     if (/^SRS\d+=/i.test(address.user)) {
         // Try to fix case-mangled addresses where the intermediate MTA converts user part to lower case
@@ -186,6 +206,12 @@ exports.normalize_address = function (address) {
     return tools.normalizeAddress(address.address());
 };
 
+/**
+ * Increment forward counters after successful message forwarding
+ * Uses Redis TTL counters to track forwarding rate limits
+ * @param {Object} connection - Haraka connection object
+ * @returns {Promise<boolean>}
+ */
 exports.increment_forward_counters = async function (connection) {
     const plugin = this;
     const txn = connection.transaction;
@@ -206,6 +232,14 @@ exports.increment_forward_counters = async function (connection) {
     }
 };
 
+/**
+ * Handle forwarding address - checks rate limits and sets up forwarding targets
+ * @param {Object} connection - Haraka connection object
+ * @param {string} address - Recipient email address
+ * @param {Object} addressData - Address data from database including targets
+ * @returns {Promise<Object>} Resolution object with forwarding details
+ * @throws {Error} If rate limit exceeded or address disabled
+ */
 exports.handle_forwarding_address = async function (connection, address, addressData) {
     const plugin = this;
     const txn = connection.transaction;
@@ -346,6 +380,13 @@ exports.handle_forwarding_address = async function (connection, address, address
     };
 };
 
+/**
+ * Hook called when a message is denied/rejected
+ * Logs rejection details to GELF for monitoring
+ * @param {Function} next - Haraka callback
+ * @param {Object} connection - Haraka connection object
+ * @param {Array} params - Denial parameters including reason and hook name
+ */
 exports.hook_deny = function (next, connection, params) {
     const plugin = this;
     const txn = connection.transaction;
@@ -484,6 +525,12 @@ exports.hook_max_data_exceeded = function (next, connection) {
     next();
 };
 
+/**
+ * Initialize WildDuck-specific transaction state
+ * Sets up tracking structures for recipients, forwards, and autoreplies
+ * @param {Object} connection - Haraka connection object
+ * @returns {Promise<void>}
+ */
 exports.init_wildduck_transaction = async function (connection) {
     const txn = connection.transaction;
 
@@ -513,6 +560,12 @@ exports.init_wildduck_transaction = async function (connection) {
     }
 };
 
+/**
+ * MAIL FROM hook - validates sender and performs SPF check
+ * @param {Function} next - Haraka callback
+ * @param {Object} connection - Haraka connection object
+ * @param {Array} params - Hook parameters including sender address
+ */
 exports.hook_mail = function (next, connection, params) {
     const plugin = this;
 
@@ -529,6 +582,13 @@ exports.hook_data_post = function (next, connection) {
     return hookDataPost(next, this, connection);
 };
 
+/**
+ * RCPT TO hook - validates recipients, checks quotas, and enforces rate limits
+ * Retries on database unavailability with timeout protection
+ * @param {Function} next - Haraka callback
+ * @param {Object} connection - Haraka connection object
+ * @param {Array} params - Hook parameters including recipient address
+ */
 exports.hook_rcpt = function (next, connection, params) {
     const plugin = this;
     const txn = connection.transaction;
@@ -594,6 +654,13 @@ exports.hook_rcpt = function (next, connection, params) {
     runCheck();
 };
 
+/**
+ * Core RCPT handler - resolves addresses, validates users, checks rate limits and quotas
+ * Handles both regular mailboxes and forwarding addresses
+ * @param {Function} next - Haraka callback
+ * @param {Object} connection - Haraka connection object
+ * @param {Array} params - Hook parameters including recipient address
+ */
 exports.real_rcpt_handler = function (next, connection, params) {
     const plugin = this;
     const txn = connection.transaction;
@@ -957,6 +1024,12 @@ exports.real_rcpt_handler = function (next, connection, params) {
     );
 };
 
+/**
+ * QUEUE hook - processes accepted message: forwards, stores to inbox, sends autoreplies
+ * Handles spam filtering, BIMI validation, message filtering, and final storage
+ * @param {Function} next - Haraka callback
+ * @param {Object} connection - Haraka connection object
+ */
 exports.hook_queue = function (next, connection) {
     const plugin = this;
     const txn = connection.transaction;
@@ -1686,7 +1759,15 @@ exports.hook_queue = function (next, connection) {
     });
 };
 
-// Rate limit is checked on RCPT TO
+/**
+ * Check rate limit for a given selector and key (does not increment counter)
+ * Uses Redis TTL counters with configurable window sizes
+ * @param {Object} connection - Haraka connection object
+ * @param {string} selector - Rate limit type (rcpt, rcptIp, etc.)
+ * @param {string} key - Unique identifier for rate limiting
+ * @param {number} limit - Optional override for default limit
+ * @param {Function} next - Callback with (err, success)
+ */
 exports.checkRateLimit = function (connection, selector, key, limit, next) {
     const plugin = this;
 
@@ -1714,7 +1795,15 @@ exports.checkRateLimit = function (connection, selector, key, limit, next) {
     });
 };
 
-// Update rate limit counters on successful delivery
+/**
+ * Update (increment) rate limit counters after successful delivery
+ * @param {Object} plugin - Plugin instance
+ * @param {Object} connection - Haraka connection object
+ * @param {string} selector - Rate limit type
+ * @param {string} key - Unique identifier
+ * @param {number} limit - Optional limit override
+ * @returns {Promise<boolean>} Success status
+ */
 exports.updateRateLimit = async (plugin, connection, selector, key, limit) => {
     limit = Number(limit) || plugin.cfg.limits[selector];
     if (!limit) {
@@ -1740,6 +1829,12 @@ exports.updateRateLimit = async (plugin, connection, selector, key, limit) => {
     });
 };
 
+/**
+ * Extract and normalize the From header address from message
+ * Handles group syntax and decodes encoded words
+ * @param {Object} txn - Transaction object with headers
+ * @returns {Object} Normalized address object with {address, provided}
+ */
 exports.getHeaderFrom = function (txn) {
     const fromAddresses = new Map();
     [].concat(txn.header.get_all('From') || []).forEach(entry => {
@@ -1769,7 +1864,12 @@ exports.getHeaderFrom = function (txn) {
         .shift();
 };
 
-// Filter recipients that are referenced in message headers To: or Cc fields
+/**
+ * Filter recipients that are referenced in message headers To: or Cc fields
+ * Used to determine which users should receive autoreplies
+ * @param {Object} txn - Transaction object with headers and targets
+ * @returns {Set} Set of user objects referenced in headers
+ */
 exports.getReferencedUsers = function (txn) {
     const { users } = txn.notes.targets;
 
@@ -1799,6 +1899,11 @@ exports.getReferencedUsers = function (txn) {
     return referencedUsers;
 };
 
+/**
+ * Extract Rspamd spam detection symbols with non-zero scores
+ * @param {Object} txn - Transaction object with rspamd results
+ * @returns {Array} Array of {key, value, score} objects
+ */
 exports.rspamdSymbols = function (txn) {
     const rspamd = txn.results.get('rspamd');
     const symbols = (rspamd && rspamd.symbols) || rspamd;
@@ -1828,6 +1933,11 @@ exports.rspamdSymbols = function (txn) {
     return result;
 };
 
+/**
+ * Check if message matches any configured Rspamd blacklist symbols (hard reject)
+ * @param {Object} txn - Transaction object with rspamd results
+ * @returns {Object|boolean} Matching symbol object or false
+ */
 exports.checkRspamdBlacklist = function (txn) {
     const plugin = this;
     const rspamd = txn.results.get('rspamd');
@@ -1856,6 +1966,11 @@ exports.checkRspamdBlacklist = function (txn) {
     return false;
 };
 
+/**
+ * Check if message matches any configured Rspamd softlist symbols (soft reject/tempfail)
+ * @param {Object} txn - Transaction object with rspamd results
+ * @returns {Object|boolean} Matching symbol object or false
+ */
 exports.checkRspamdSoftlist = function (txn) {
     const plugin = this;
     const rspamd = txn.results.get('rspamd');
@@ -1884,6 +1999,13 @@ exports.checkRspamdSoftlist = function (txn) {
     return false;
 };
 
+/**
+ * Create DSN spam rejection response with custom message
+ * Supports {host} placeholder for sender domain
+ * @param {Object} txn - Transaction object
+ * @param {string} key - Rspamd symbol key for custom message lookup
+ * @returns {Object} DSN rejection object
+ */
 exports.dsnSpamResponse = function (txn, key) {
     const plugin = this;
     let message = plugin.rspamd.responses[key] || defaultSpamRejectMessage;
