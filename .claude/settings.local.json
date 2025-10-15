@@ -14,7 +14,9 @@
       "Read(//Users/johnhuang/0xmail/wildduck/lib/**)",
       "Read(//Users/johnhuang/0xmail/wildduck/**)",
       "Read(//Users/johnhuang/0xmail/**)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm run lint)",
+      "Bash(npm test)"
     ],
     "deny": [],
     "ask": []
