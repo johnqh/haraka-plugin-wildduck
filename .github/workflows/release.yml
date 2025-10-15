@@ -9,8 +9,8 @@ on:
 
 env:
     REGISTRY: ghcr.io
-    IMAGE_NAME: ${{ github.event.repository.name }}
-    PACKAGE_NAME: ${{ github.event.repository.name }}
+    IMAGE_NAME: haraka
+    PACKAGE_NAME: haraka
 
 name: release
 jobs:
@@ -65,7 +65,7 @@ jobs:
               run: |
                   if [[ -n "${{ secrets.ZONE_WEBHOOK_URL }}" ]]; then
                     curl -X POST -H 'Content-type: application/json' \
-                    --data '{"channel":"haraka-plugin-changelog", "text":"🚀 *Release ${{ needs.check_for_release.outputs.version }}* deployed successfully!\n• Docker: `docker pull ${{ secrets.DOCKERHUB_USERNAME }}/haraka-plugin-wildduck:${{ needs.check_for_release.outputs.version_tag }}`\n• GitHub: https://github.com/${{ github.repository }}/releases/tag/${{ needs.check_for_release.outputs.version_tag }}"}' \
+                    --data '{"channel":"haraka-plugin-changelog", "text":"🚀 *Release ${{ needs.check_for_release.outputs.version }}* deployed successfully!\n• Docker: `docker pull ${{ secrets.DOCKERHUB_USERNAME }}/haraka:${{ needs.check_for_release.outputs.version_tag }}`\n• GitHub: https://github.com/${{ github.repository }}/releases/tag/${{ needs.check_for_release.outputs.version_tag }}"}' \
                     ${{ secrets.ZONE_WEBHOOK_URL }} || echo "Slack notification failed"
                   else
                     echo "ZONE_WEBHOOK_URL not configured, skipping notification"
@@ -96,7 +96,10 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: ${{ matrix.node }}
+                  registry-url: 'https://registry.npmjs.org'
             - run: npm install
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
             - run: npm test
 
     publish_npm:
@@ -116,7 +119,9 @@ jobs:
             
             - name: Install dependencies
               run: npm install
-            
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
             - name: Publish to NPM
               run: npm publish
               env:
@@ -223,9 +228,12 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 18
+                  registry-url: 'https://registry.npmjs.org'
 
             - name: Install dependencies
               run: npm install --omit=dev
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
             - name: Move files to temporary directory
               run: |
@@ -284,14 +292,14 @@ jobs:
                   
                   if [ "${{ needs.publish_npm.result }}" = "success" ]; then
                     echo "✅ **NPM Package:** Published successfully" >> $GITHUB_STEP_SUMMARY
-                    echo "   - Install: \`npm install @0xmail/haraka-plugin-wildduck@${{ needs.check_for_release.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+                    echo "   - Install: \`npm install @johnqh/haraka@${{ needs.check_for_release.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
                   else
                     echo "❌ **NPM Package:** Failed to publish" >> $GITHUB_STEP_SUMMARY
                   fi
                   
                   if [ "${{ needs.publish_docker.result }}" = "success" ]; then
                     echo "✅ **Docker Image:** Built and pushed successfully" >> $GITHUB_STEP_SUMMARY
-                    echo "   - DockerHub: \`docker pull ${{ secrets.DOCKERHUB_USERNAME }}/haraka-plugin-wildduck:${{ needs.check_for_release.outputs.version_tag }}\`" >> $GITHUB_STEP_SUMMARY
+                    echo "   - DockerHub: \`docker pull ${{ secrets.DOCKERHUB_USERNAME }}/haraka:${{ needs.check_for_release.outputs.version_tag }}\`" >> $GITHUB_STEP_SUMMARY
                     echo "   - GHCR: \`docker pull ghcr.io/${{ github.repository }}:${{ needs.check_for_release.outputs.version_tag }}\`" >> $GITHUB_STEP_SUMMARY
                   else
                     echo "❌ **Docker Image:** Failed to build/push" >> $GITHUB_STEP_SUMMARY
