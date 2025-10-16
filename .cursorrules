@@ -13,7 +13,7 @@ This is a Haraka SMTP plugin for WildDuck mail server that handles incoming emai
 - **lib/stream-collect.js**: Stream transformer for collecting email message chunks
 
 ### Key Dependencies
-- **@sudobility/wildduck**: Core WildDuck library (restricted package)
+- **@johnqh/wildduck**: Core WildDuck library (restricted package)
 - **mailauth**: Email authentication protocols
 - **ioredis**: Redis client for rate limiting
 - **mongodb**: Database storage
