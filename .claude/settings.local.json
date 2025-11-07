@@ -16,7 +16,15 @@
       "Read(//Users/johnhuang/0xmail/**)",
       "Bash(npm install:*)",
       "Bash(npm run lint)",
-      "Bash(npm test)"
+      "Bash(npm test)",
+      "Bash(npx ncu)",
+      "Bash(npx ncu:*)",
+      "WebSearch",
+      "Bash(chmod:*)",
+      "Bash(node test-mongo-v6.js:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(node --version:*)",
+      "Bash(npm show:*)"
     ],
     "deny": [],
     "ask": []
