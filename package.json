@@ -44,7 +44,7 @@
         "prettier": "^3.6.2"
     },
     "dependencies": {
-        "@johnqh/wildduck": "8.0.2",
+        "@johnqh/wildduck": "8.1.0",
         "gelf": "2.0.1",
         "haraka-dsn": "1.1.0",
         "ioredis": "5.8.2",
