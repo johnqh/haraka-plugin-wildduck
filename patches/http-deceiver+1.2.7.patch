@@ -1,0 +1,79 @@
+diff --git a/node_modules/http-deceiver/lib/deceiver.js b/node_modules/http-deceiver/lib/deceiver.js
+index 33e14cb..c1f9149 100644
+--- a/node_modules/http-deceiver/lib/deceiver.js
++++ b/node_modules/http-deceiver/lib/deceiver.js
+@@ -19,23 +19,60 @@ var kOnHeadersComplete;
+ var kOnMessageComplete;
+ var kOnBody;
+ if (mode === 'normal' || mode === 'modern') {
+-  HTTPParser = process.binding('http_parser').HTTPParser;
+-  methods = HTTPParser.methods;
+-
+-  // v6
+-  if (!methods)
+-    methods = process.binding('http_parser').methods;
++  // Node.js v20+ removed process.binding('http_parser')
++  try {
++    HTTPParser = process.binding('http_parser').HTTPParser;
++  } catch (e) {
++    // For Node.js v20+, use internal http module
++    try {
++      HTTPParser = require('_http_common').HTTPParser;
++    } catch (e2) {
++      // Fallback: SPDY might not be needed at all
++      HTTPParser = null;
++    }
++  }
++
++  if (HTTPParser) {
++    methods = HTTPParser.methods;
++
++    // v6
++    if (!methods) {
++      try {
++        methods = process.binding('http_parser').methods;
++      } catch (e) {
++        // For Node.js v20+, methods array is not exposed
++        // Define the standard HTTP methods manually
++        methods = [
++          'DELETE', 'GET', 'HEAD', 'POST', 'PUT', 'CONNECT', 'OPTIONS', 'TRACE',
++          'COPY', 'LOCK', 'MKCOL', 'MOVE', 'PROPFIND', 'PROPPATCH', 'SEARCH',
++          'UNLOCK', 'BIND', 'REBIND', 'UNBIND', 'ACL', 'REPORT', 'MKACTIVITY',
++          'CHECKOUT', 'MERGE', 'M-SEARCH', 'NOTIFY', 'SUBSCRIBE', 'UNSUBSCRIBE',
++          'PATCH', 'PURGE', 'MKCALENDAR', 'LINK', 'UNLINK', 'SOURCE'
++        ];
++      }
++    }
++  }
+ 
+   reverseMethods = {};
+ 
+-  methods.forEach(function(method, index) {
+-    reverseMethods[method] = index;
+-  });
+-
+-  kOnHeaders = HTTPParser.kOnHeaders | 0;
+-  kOnHeadersComplete = HTTPParser.kOnHeadersComplete | 0;
+-  kOnMessageComplete = HTTPParser.kOnMessageComplete | 0;
+-  kOnBody = HTTPParser.kOnBody | 0;
++  if (methods) {
++    methods.forEach(function(method, index) {
++      reverseMethods[method] = index;
++    });
++  }
++
++  if (HTTPParser) {
++    kOnHeaders = HTTPParser.kOnHeaders | 0;
++    kOnHeadersComplete = HTTPParser.kOnHeadersComplete | 0;
++    kOnMessageComplete = HTTPParser.kOnMessageComplete | 0;
++    kOnBody = HTTPParser.kOnBody | 0;
++  } else {
++    // Fallback for when HTTPParser is not available
++    kOnHeaders = 0;
++    kOnHeadersComplete = 0;
++    kOnMessageComplete = 0;
++    kOnBody = 0;
++  }
+ } else {
+   kOnHeaders = 'onHeaders';
+   kOnHeadersComplete = 'onHeadersComplete';
