@@ -23,7 +23,4 @@ jobs:
         with:
             docker-image-name: 'haraka'
             npm-access: 'public'
-        secrets:
-            NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-            DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-            DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        secrets: inherit  # Pass all repository secrets
