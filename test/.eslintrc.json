@@ -1,0 +1,12 @@
+{
+    "env": {
+        "mocha": true,
+        "node": true
+    },
+    "rules": {
+        "no-unused-expressions": "off",
+        "global-require": "off",
+        "no-unused-vars": "warn",
+        "no-invalid-this": "off"
+    }
+}
