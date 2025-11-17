@@ -2,15 +2,20 @@
 
 ## Overview
 
-The `haraka-plugin-wildduck` is an SMTP plugin for Haraka that enables email delivery to WildDuck mailboxes. It handles the complete email processing pipeline from SMTP reception through authentication, validation, filtering, and final storage.
+The `haraka-plugin-wildduck` is an SMTP plugin for Haraka that enables
+email delivery to WildDuck mailboxes. It handles the complete email
+processing pipeline from SMTP reception through authentication,
+validation, filtering, and final storage.
 
 ## System Components
 
 ### 1. Main Plugin (`index.js`)
 
-The entry point that registers Haraka hooks and orchestrates the email processing flow.
+The entry point that registers Haraka hooks and orchestrates the email
+processing flow.
 
 **Key Responsibilities:**
+
 - Plugin registration and configuration loading
 - Database connection management (MongoDB + Redis)
 - SMTP hook implementations (MAIL, RCPT, DATA, QUEUE, DENY)
@@ -19,7 +24,8 @@ The entry point that registers Haraka hooks and orchestrates the email processin
 - Message queueing and storage orchestration
 
 **Hook Flow:**
-```
+
+```text
 MAIL FROM → hook_mail → SPF validation
     ↓
 RCPT TO → hook_rcpt → Address resolution, quota checks, rate limiting
@@ -36,12 +42,14 @@ DENY → hook_deny → Rejection logging
 Manages connections to MongoDB and Redis.
 
 **Features:**
+
 - Multi-database support (main, users, gridfs, sender)
 - Connection pooling and retry logic
 - Handler initialization (UserHandler, MessageHandler, SettingsHandler)
 - Redis TTL counter setup for rate limiting
 
 **Connection Structure:**
+
 ```javascript
 {
   database: MongoDB,      // Main message storage
@@ -60,6 +68,7 @@ Manages connections to MongoDB and Redis.
 Implements email authentication protocols using the `mailauth` library.
 
 **Protocols Supported:**
+
 - **SPF** (Sender Policy Framework) - Validates sender IP authorization
 - **DKIM** (DomainKeys Identified Mail) - Verifies message signature integrity
 - **ARC** (Authenticated Received Chain) - Validates forwarding chain
@@ -67,6 +76,7 @@ Implements email authentication protocols using the `mailauth` library.
 - **BIMI** (Brand Indicators for Message Identification) - Logo validation
 
 **Authentication Flow:**
+
 1. SPF checked during MAIL FROM (hookMail)
 2. DKIM/ARC/DMARC/BIMI verified during DATA (hookDataPost)
 3. Results stored in `txn.notes.*Result`
@@ -75,9 +85,11 @@ Implements email authentication protocols using the `mailauth` library.
 
 ### 4. Hook Wrappers (`lib/hooks.js`)
 
-Thin wrappers around authentication functions that integrate with Haraka's hook system.
+Thin wrappers around authentication functions that integrate with Haraka's
+hook system.
 
 **Functions:**
+
 - `mail()` - Wraps SPF validation with logging
 - `dataPost()` - Creates stream for DKIM verification
 
@@ -86,6 +98,7 @@ Thin wrappers around authentication functions that integrate with Haraka's hook 
 Transform stream that buffers message chunks for later processing.
 
 **Purpose:**
+
 - Collects email body chunks during transmission
 - Maintains chunks array and total length
 - Enables message reuse (forwarding, storage, autoreplies)
@@ -134,7 +147,7 @@ txn.notes = {
 
 ### Recipient Resolution Flow
 
-```
+```text
 1. Normalize address (handle SRS, punycode)
 2. Check for wildcard (*) - reject
 3. Resolve address via userHandler.resolveAddress()
@@ -152,7 +165,7 @@ txn.notes = {
 
 ### Message Processing Flow (QUEUE Hook)
 
-```
+```text
 1. Check Rspamd blacklist/softlist → Reject if matched
 2. Extract verification results (TLS, SPF, DKIM, ARC, BIMI)
 3. Collect message stream → Buffer chunks
@@ -348,7 +361,7 @@ plugin.loggelf({
 - DMARC policy respected for rejection
 - ARC validation for forwarded messages
 
-### Rate Limiting
+### Rate Limiting Security
 
 - Multiple dimensions (per-user, per-IP, forwarding)
 - Sliding windows prevent burst attacks
@@ -367,6 +380,7 @@ plugin.loggelf({
 ### File: `config/wildduck.yaml`
 
 **Key Sections:**
+
 - `redis` - Redis connection (standalone or Sentinel)
 - `mongo` - MongoDB databases (main, users, gridfs, sender)
 - `sender` - ZoneMTA integration
@@ -379,7 +393,8 @@ plugin.loggelf({
 
 ### Dynamic Reloading
 
-Configuration reloads automatically when `wildduck.yaml` changes via Haraka's config system callback.
+Configuration reloads automatically when `wildduck.yaml` changes via
+Haraka's config system callback.
 
 ## Performance Considerations
 
@@ -406,6 +421,7 @@ Configuration reloads automatically when `wildduck.yaml` changes via Haraka's co
 ### GELF Integration
 
 Every transaction stage logged:
+
 - MAIL FROM acceptance
 - RCPT TO validation (with resolution details)
 - Authentication results (SPF, DKIM, DMARC, ARC, BIMI)
@@ -471,8 +487,12 @@ npm test            # Run full test suite
 
 ### Common Pitfalls
 
-- **Transaction notes lifecycle** - Initialize in `init_wildduck_transaction()`, not in individual hooks
-- **Stream consumption** - Message stream can only be read once, use StreamCollect to buffer
-- **Async database calls** - Always handle errors, database may not be available immediately
-- **Rate limit ordering** - Check THEN increment, not the other way around
+- **Transaction notes lifecycle** - Initialize in
+  `init_wildduck_transaction()`, not in individual hooks
+- **Stream consumption** - Message stream can only be read once, use
+  StreamCollect to buffer
+- **Async database calls** - Always handle errors, database may not be
+  available immediately
+- **Rate limit ordering** - Check THEN increment, not the other way
+  around
 - **GELF field naming** - Use underscores (`_field_name`), not camelCase
