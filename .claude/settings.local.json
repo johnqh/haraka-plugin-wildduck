@@ -11,9 +11,6 @@
       "mcp__ide__getDiagnostics",
       "Bash(yamllint:*)",
       "Bash(python3:*)",
-      "Read(//Users/johnhuang/0xmail/wildduck/lib/**)",
-      "Read(//Users/johnhuang/0xmail/wildduck/**)",
-      "Read(//Users/johnhuang/0xmail/**)",
       "Bash(npm install:*)",
       "Bash(npm run lint)",
       "Bash(npm test)",
@@ -29,7 +26,8 @@
       "Bash(npm pack:*)",
       "Bash(tar:*)",
       "Bash(docker run --rm johnqh/haraka:latest sh -c \"cat /app/node_modules/haraka-plugin-wildduck/package.json | grep -A2 ''@johnqh/wildduck''\")",
-      "Bash(docker pull:*)"
+      "Bash(docker pull:*)",
+      "Bash(npx markdownlint-cli:*)"
     ],
     "deny": [],
     "ask": []
