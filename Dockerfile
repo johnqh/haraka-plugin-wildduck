@@ -1,5 +1,7 @@
 FROM node:lts-alpine AS builder
 
+ARG NPM_TOKEN
+
 RUN apk add --no-cache git python3 py3-pip make g++
 
 WORKDIR /app
@@ -14,12 +16,14 @@ RUN npm install --omit=dev
 
 COPY . /app/node_modules/haraka-plugin-wildduck
 WORKDIR /app/node_modules/haraka-plugin-wildduck
-RUN npm install --omit=dev
+RUN echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc && \
+    npm install --omit=dev && \
+    rm -f .npmrc
 
 
 FROM node:lts-alpine AS app
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 RUN apk add --no-cache tini
 RUN apk add --no-cache openssl
