@@ -27,7 +27,9 @@
       "Bash(tar:*)",
       "Bash(docker run --rm johnqh/haraka:latest sh -c \"cat /app/node_modules/haraka-plugin-wildduck/package.json | grep -A2 ''@johnqh/wildduck''\")",
       "Bash(docker pull:*)",
-      "Bash(npx markdownlint-cli:*)"
+      "Bash(npx markdownlint-cli:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
