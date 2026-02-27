@@ -29,7 +29,9 @@
       "Bash(docker pull:*)",
       "Bash(npx markdownlint-cli:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:signic.email)"
     ],
     "deny": [],
     "ask": []
