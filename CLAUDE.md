@@ -1,5 +1,10 @@
 # haraka-plugin-wildduck - AI Development Guide
 
+> **Git policy — never auto-commit or auto-push.** Leave your work in the working tree.
+> Run `git commit`, `git push`, `gh pr create`, or `scripts/push_all.sh` **only when the user
+> explicitly asks in that turn**. Approval for an earlier change does not carry forward, and
+> finishing a task is not permission to commit it.
+
 ## Overview
 
 SMTP delivery plugin for Haraka that integrates with the WildDuck mail server. Handles the complete inbound email pipeline: SMTP negotiation, email authentication (SPF/DKIM/DMARC/ARC/BIMI), spam filtering via Rspamd, rate limiting, recipient validation, message forwarding, autoreply generation, and final storage into MongoDB. This is the sole delivery plugin needed -- do not enable Haraka's built-in SPF or dkim_verify plugins alongside it.
@@ -245,3 +250,7 @@ npm run update           # rm node_modules, ncu -u, npm install
 | `patch-package` | Applies `patches/` on postinstall |
 
 **Dev**: `mocha` + `chai` + `sinon` (testing), `grunt` + plugins (runner), `eslint` + `prettier` (style), `npm-check-updates` (updates).
+
+## Git Workflow
+
+- Do not use feature branches for code changes. Always stay on the current branch.
