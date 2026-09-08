@@ -169,7 +169,7 @@ npm run update           # rm node_modules, ncu -u, npm install
 
 **Docker**: Multi-stage build cloning Haraka v3.1.1. Requires `NPM_TOKEN` build arg for `@sudobility` packages.
 
-**CI/CD**: GitHub Actions on push/PR to master/develop. Shared workflow from `johnqh/workflows`.
+**CI/CD**: GitHub Actions on push/PR to main/develop. Shared workflow from `johnqh/workflows`.
 
 ## Architecture Patterns
 
